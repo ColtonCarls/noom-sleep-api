@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+build/
+
+# Docker Compose: local PostgreSQL data volume (see docker-compose.yml → ./db)
+db/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# Logs / dumps
+*.log
+*.hprof
+
+# Local secrets (if you add env files later)
+.env
+.env.local
+.env.*.local
