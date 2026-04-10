@@ -10,18 +10,33 @@ import com.noom.interview.fullstack.sleep.repository.UserRepository
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.InjectMocks
+import org.mockito.Mock
+import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.junit.jupiter.MockitoSettings
 import org.mockito.kotlin.*
+import org.mockito.quality.Strictness
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 
+@ExtendWith(MockitoExtension::class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@DisplayName("SleepLogService")
 class SleepLogServiceTest {
 
-    private val sleepLogRepository: SleepLogRepository = mock()
-    private val userRepository: UserRepository = mock()
-    private val service = SleepLogService(sleepLogRepository, userRepository)
+    @Mock
+    private lateinit var sleepLogRepository: SleepLogRepository
+
+    @Mock
+    private lateinit var userRepository: UserRepository
+
+    @InjectMocks
+    private lateinit var service: SleepLogService
 
     private val userId = 1L
 
@@ -29,8 +44,6 @@ class SleepLogServiceTest {
     fun setUp() {
         whenever(userRepository.existsById(userId)).thenReturn(true)
     }
-
-    // MARK: - Test Helpers
 
     private fun buildSleepLog(
         bedTime: Instant = Instant.parse("2026-04-08T22:53:00Z"),
@@ -49,9 +62,8 @@ class SleepLogServiceTest {
         createdAt = Instant.now()
     )
 
-    // MARK: - createSleepLog
-
     @Nested
+    @DisplayName("createSleepLog")
     inner class CreateSleepLog {
 
         @Test
@@ -75,7 +87,6 @@ class SleepLogServiceTest {
         @Test
         fun `throws UserNotFoundException when user does not exist`() {
             whenever(userRepository.existsById(999L)).thenReturn(false)
-
             val request = CreateSleepLogRequest(
                 bedTime = Instant.parse("2026-04-08T22:53:00Z"),
                 wakeTime = Instant.parse("2026-04-09T07:05:00Z"),
@@ -105,9 +116,8 @@ class SleepLogServiceTest {
         }
     }
 
-    // MARK: - getLastNightSleepLog
-
     @Nested
+    @DisplayName("getLastNightSleepLog")
     inner class GetLastNightSleepLog {
 
         @Test
@@ -141,16 +151,14 @@ class SleepLogServiceTest {
         }
     }
 
-    // MARK: - getThirtyDayAverages
-
     @Nested
+    @DisplayName("getThirtyDayAverages")
     inner class GetThirtyDayAverages {
 
         @Test
         fun `returns correct averages for multiple logs`() {
             val today = LocalDate.now()
             val startDate = today.minusDays(29)
-
             val logs = listOf(
                 buildSleepLog(
                     bedTime = Instant.parse("2026-04-08T23:00:00Z"),
@@ -188,10 +196,7 @@ class SleepLogServiceTest {
         fun `includes all feeling values even when count is zero`() {
             val today = LocalDate.now()
             val startDate = today.minusDays(29)
-
-            val logs = listOf(
-                buildSleepLog(feeling = MorningFeeling.GOOD, totalMinutesInBed = 480)
-            )
+            val logs = listOf(buildSleepLog(feeling = MorningFeeling.GOOD, totalMinutesInBed = 480))
             whenever(sleepLogRepository.findByUserIdAndDateRange(userId, startDate, today))
                 .thenReturn(logs)
 
@@ -209,7 +214,6 @@ class SleepLogServiceTest {
         fun `averages bed times correctly across midnight`() {
             val today = LocalDate.now()
             val startDate = today.minusDays(29)
-
             val logs = listOf(
                 buildSleepLog(
                     bedTime = Instant.parse("2026-04-08T23:00:00Z"),
@@ -227,7 +231,6 @@ class SleepLogServiceTest {
 
             val response = service.getThirtyDayAverages(userId)
 
-            // 23:00 and 01:00 should average to midnight, not noon
             assertThat(response.averageBedTime).isEqualTo(LocalTime.MIDNIGHT)
         }
 
@@ -254,7 +257,6 @@ class SleepLogServiceTest {
         fun `single log returns that log's values as averages`() {
             val today = LocalDate.now()
             val startDate = today.minusDays(29)
-
             val logs = listOf(
                 buildSleepLog(
                     bedTime = Instant.parse("2026-04-08T22:30:00Z"),
