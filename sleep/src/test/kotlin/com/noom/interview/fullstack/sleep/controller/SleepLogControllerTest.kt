@@ -8,6 +8,7 @@ import com.noom.interview.fullstack.sleep.model.MorningFeeling
 import com.noom.interview.fullstack.sleep.model.SleepAveragesResponse
 import com.noom.interview.fullstack.sleep.model.SleepLogResponse
 import com.noom.interview.fullstack.sleep.service.SleepLogService
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -26,6 +27,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @WebMvcTest(SleepLogController::class)
+@DisplayName("SleepLogController")
 class SleepLogControllerTest {
 
     @Autowired
@@ -40,9 +42,8 @@ class SleepLogControllerTest {
     private val userId = 1L
     private val basePath = "/api/users/$userId/sleep-logs"
 
-    // MARK: - POST /api/users/{userId}/sleep-logs
-
     @Nested
+    @DisplayName("POST /api/users/{userId}/sleep-logs")
     inner class CreateSleepLog {
 
         @Test
@@ -132,9 +133,8 @@ class SleepLogControllerTest {
         }
     }
 
-    // MARK: - GET /api/users/{userId}/sleep-logs/last-night
-
     @Nested
+    @DisplayName("GET /api/users/{userId}/sleep-logs/last-night")
     inner class GetLastNightSleepLog {
 
         @Test
@@ -175,9 +175,8 @@ class SleepLogControllerTest {
         }
     }
 
-    // MARK: - GET /api/users/{userId}/sleep-logs/averages
-
     @Nested
+    @DisplayName("GET /api/users/{userId}/sleep-logs/averages")
     inner class GetThirtyDayAverages {
 
         @Test

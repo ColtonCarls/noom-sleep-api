@@ -3,7 +3,7 @@
 build/
 
 # Docker Compose: local PostgreSQL data volume (see docker-compose.yml → ./db)
-db/
+/db/
 
 # OS
 .DS_Store
