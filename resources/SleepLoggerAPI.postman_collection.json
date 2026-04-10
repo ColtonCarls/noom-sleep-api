@@ -1,0 +1,300 @@
+{
+  "info": {
+    "name": "Sleep Logger API",
+    "description": "Test collection for the Noom Sleep Logger take-home API.\nSeeded users: Alice (1), Bob (2), Charlie (3).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 — Create Sleep Log",
+      "item": [
+        {
+          "name": "1a. Happy path — create sleep log (Alice)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-08T22:53:00Z\",\n  \"wakeTime\": \"2026-04-09T07:05:00Z\",\n  \"feeling\": \"GOOD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "1b. Bad request — wake time before bed time",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/2/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "2", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-09T07:05:00Z\",\n  \"wakeTime\": \"2026-04-08T22:53:00Z\",\n  \"feeling\": \"GOOD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "1c. Bad request — invalid feeling value",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/2/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "2", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-08T22:53:00Z\",\n  \"wakeTime\": \"2026-04-09T07:05:00Z\",\n  \"feeling\": \"TERRIBLE\"\n}"
+            }
+          }
+        },
+        {
+          "name": "1d. Conflict — duplicate sleep date (Alice)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-08T23:30:00Z\",\n  \"wakeTime\": \"2026-04-09T06:00:00Z\",\n  \"feeling\": \"BAD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "1e. Error — non-existent user (FK violation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/9999/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "9999", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-07T22:53:00Z\",\n  \"wakeTime\": \"2026-04-08T07:05:00Z\",\n  \"feeling\": \"OK\"\n}"
+            }
+          }
+        },
+        {
+          "name": "1f. Bad request — missing required fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/2/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "2", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-08T22:53:00Z\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 — Get Last Night's Sleep",
+      "item": [
+        {
+          "name": "2a. Happy path — Alice has today's log",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1/sleep-logs/last-night",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1", "sleep-logs", "last-night"]
+            }
+          }
+        },
+        {
+          "name": "2b. Not found — Bob has no log for today",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/2/sleep-logs/last-night",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "2", "sleep-logs", "last-night"]
+            }
+          }
+        },
+        {
+          "name": "2c. Not found — non-existent user",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/9999/sleep-logs/last-night",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "9999", "sleep-logs", "last-night"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 — Seed Data for Averages (Charlie)",
+      "description": "Run all 5 requests in order to populate Charlie's sleep history.",
+      "item": [
+        {
+          "name": "3-seed-1. Charlie — Apr 9 (today)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/3/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "3", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-08T23:15:00Z\",\n  \"wakeTime\": \"2026-04-09T06:45:00Z\",\n  \"feeling\": \"OK\"\n}"
+            }
+          }
+        },
+        {
+          "name": "3-seed-2. Charlie — Apr 8",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/3/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "3", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-07T22:30:00Z\",\n  \"wakeTime\": \"2026-04-08T07:00:00Z\",\n  \"feeling\": \"GOOD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "3-seed-3. Charlie — Apr 7",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/3/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "3", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-06T23:45:00Z\",\n  \"wakeTime\": \"2026-04-07T06:30:00Z\",\n  \"feeling\": \"BAD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "3-seed-4. Charlie — Apr 6",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/3/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "3", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-05T22:00:00Z\",\n  \"wakeTime\": \"2026-04-06T07:15:00Z\",\n  \"feeling\": \"GOOD\"\n}"
+            }
+          }
+        },
+        {
+          "name": "3-seed-5. Charlie — Apr 5",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/3/sleep-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "3", "sleep-logs"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedTime\": \"2026-04-04T23:30:00Z\",\n  \"wakeTime\": \"2026-04-05T06:00:00Z\",\n  \"feeling\": \"OK\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 — Get 30-Day Averages",
+      "item": [
+        {
+          "name": "4a. Happy path — Charlie (5 entries, mixed feelings)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/3/sleep-logs/averages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "3", "sleep-logs", "averages"]
+            }
+          }
+        },
+        {
+          "name": "4b. Single entry — Alice (avg = single value)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/1/sleep-logs/averages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "1", "sleep-logs", "averages"]
+            }
+          }
+        },
+        {
+          "name": "4c. Not found — Bob has no logs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/users/2/sleep-logs/averages",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "2", "sleep-logs", "averages"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
