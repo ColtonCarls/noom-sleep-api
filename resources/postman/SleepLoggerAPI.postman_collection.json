@@ -1,13 +1,56 @@
 {
   "info": {
     "name": "Sleep Logger API",
-    "description": "Test collection for the Noom Sleep Logger take-home API.\nSeeded users: Alice (1), Bob (2), Charlie (3).",
+    "description": "Test collection for the Noom Sleep Logger take-home API.\nSeeded users: Alice (1), Bob (2), Charlie (3).\n\nTimestamps are generated dynamically so tests work regardless of the date they are run.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:8080"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Build ISO timestamps relative to today so tests work on any date.",
+          "const now = new Date();",
+          "const yyyy = now.getUTCFullYear();",
+          "const mm   = String(now.getUTCMonth() + 1).padStart(2, '0');",
+          "const dd   = String(now.getUTCDate()).padStart(2, '0');",
+          "",
+          "function pad(n) { return String(n).padStart(2, '0'); }",
+          "",
+          "function dateStr(offset) {",
+          "  const d = new Date(now);",
+          "  d.setUTCDate(d.getUTCDate() + offset);",
+          "  return d.getUTCFullYear() + '-' + pad(d.getUTCMonth()+1) + '-' + pad(d.getUTCDate());",
+          "}",
+          "",
+          "// today-0  bed last night / wake this morning",
+          "pm.variables.set('bed_today',  dateStr(-1) + 'T22:53:00Z');",
+          "pm.variables.set('wake_today', dateStr(0)  + 'T07:05:00Z');",
+          "",
+          "// Seed dates for Charlie (days ago from today)",
+          "pm.variables.set('bed_d0',  dateStr(-1) + 'T23:15:00Z');",
+          "pm.variables.set('wake_d0', dateStr(0)  + 'T06:45:00Z');",
+          "",
+          "pm.variables.set('bed_d1',  dateStr(-2) + 'T22:30:00Z');",
+          "pm.variables.set('wake_d1', dateStr(-1) + 'T07:00:00Z');",
+          "",
+          "pm.variables.set('bed_d2',  dateStr(-3) + 'T23:45:00Z');",
+          "pm.variables.set('wake_d2', dateStr(-2) + 'T06:30:00Z');",
+          "",
+          "pm.variables.set('bed_d3',  dateStr(-4) + 'T22:00:00Z');",
+          "pm.variables.set('wake_d3', dateStr(-3) + 'T07:15:00Z');",
+          "",
+          "pm.variables.set('bed_d4',  dateStr(-5) + 'T23:30:00Z');",
+          "pm.variables.set('wake_d4', dateStr(-4) + 'T06:00:00Z');"
+        ]
+      }
     }
   ],
   "item": [
@@ -28,7 +71,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-08T22:53:00Z\",\n  \"wakeTime\": \"2026-04-09T07:05:00Z\",\n  \"feeling\": \"GOOD\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_today}}\",\n  \"wakeTime\": \"{{wake_today}}\",\n  \"feeling\": \"GOOD\"\n}"
             }
           }
         },
@@ -46,7 +89,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-09T07:05:00Z\",\n  \"wakeTime\": \"2026-04-08T22:53:00Z\",\n  \"feeling\": \"GOOD\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{wake_today}}\",\n  \"wakeTime\": \"{{bed_today}}\",\n  \"feeling\": \"GOOD\"\n}"
             }
           }
         },
@@ -64,7 +107,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-08T22:53:00Z\",\n  \"wakeTime\": \"2026-04-09T07:05:00Z\",\n  \"feeling\": \"TERRIBLE\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_today}}\",\n  \"wakeTime\": \"{{wake_today}}\",\n  \"feeling\": \"TERRIBLE\"\n}"
             }
           }
         },
@@ -82,7 +125,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-08T23:30:00Z\",\n  \"wakeTime\": \"2026-04-09T06:00:00Z\",\n  \"feeling\": \"BAD\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_today}}\",\n  \"wakeTime\": \"{{wake_today}}\",\n  \"feeling\": \"BAD\"\n}"
             }
           }
         },
@@ -100,7 +143,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-07T22:53:00Z\",\n  \"wakeTime\": \"2026-04-08T07:05:00Z\",\n  \"feeling\": \"OK\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_today}}\",\n  \"wakeTime\": \"{{wake_today}}\",\n  \"feeling\": \"OK\"\n}"
             }
           }
         },
@@ -118,7 +161,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-08T22:53:00Z\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_today}}\"\n}"
             }
           }
         }
@@ -167,7 +210,7 @@
       "description": "Run all 5 requests in order to populate Charlie's sleep history.",
       "item": [
         {
-          "name": "3-seed-1. Charlie — Apr 9 (today)",
+          "name": "3-seed-1. Charlie — today",
           "request": {
             "method": "POST",
             "header": [
@@ -180,12 +223,12 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-08T23:15:00Z\",\n  \"wakeTime\": \"2026-04-09T06:45:00Z\",\n  \"feeling\": \"OK\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_d0}}\",\n  \"wakeTime\": \"{{wake_d0}}\",\n  \"feeling\": \"OK\"\n}"
             }
           }
         },
         {
-          "name": "3-seed-2. Charlie — Apr 8",
+          "name": "3-seed-2. Charlie — yesterday",
           "request": {
             "method": "POST",
             "header": [
@@ -198,12 +241,12 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-07T22:30:00Z\",\n  \"wakeTime\": \"2026-04-08T07:00:00Z\",\n  \"feeling\": \"GOOD\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_d1}}\",\n  \"wakeTime\": \"{{wake_d1}}\",\n  \"feeling\": \"GOOD\"\n}"
             }
           }
         },
         {
-          "name": "3-seed-3. Charlie — Apr 7",
+          "name": "3-seed-3. Charlie — 2 days ago",
           "request": {
             "method": "POST",
             "header": [
@@ -216,12 +259,12 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-06T23:45:00Z\",\n  \"wakeTime\": \"2026-04-07T06:30:00Z\",\n  \"feeling\": \"BAD\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_d2}}\",\n  \"wakeTime\": \"{{wake_d2}}\",\n  \"feeling\": \"BAD\"\n}"
             }
           }
         },
         {
-          "name": "3-seed-4. Charlie — Apr 6",
+          "name": "3-seed-4. Charlie — 3 days ago",
           "request": {
             "method": "POST",
             "header": [
@@ -234,12 +277,12 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-05T22:00:00Z\",\n  \"wakeTime\": \"2026-04-06T07:15:00Z\",\n  \"feeling\": \"GOOD\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_d3}}\",\n  \"wakeTime\": \"{{wake_d3}}\",\n  \"feeling\": \"GOOD\"\n}"
             }
           }
         },
         {
-          "name": "3-seed-5. Charlie — Apr 5",
+          "name": "3-seed-5. Charlie — 4 days ago",
           "request": {
             "method": "POST",
             "header": [
@@ -252,7 +295,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"bedTime\": \"2026-04-04T23:30:00Z\",\n  \"wakeTime\": \"2026-04-05T06:00:00Z\",\n  \"feeling\": \"OK\"\n}"
+              "raw": "{\n  \"bedTime\": \"{{bed_d4}}\",\n  \"wakeTime\": \"{{wake_d4}}\",\n  \"feeling\": \"OK\"\n}"
             }
           }
         }
