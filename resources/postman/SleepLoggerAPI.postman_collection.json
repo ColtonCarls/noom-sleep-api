@@ -16,11 +16,7 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "// Build ISO timestamps relative to today so tests work on any date.",
           "const now = new Date();",
-          "const yyyy = now.getUTCFullYear();",
-          "const mm   = String(now.getUTCMonth() + 1).padStart(2, '0');",
-          "const dd   = String(now.getUTCDate()).padStart(2, '0');",
           "",
           "function pad(n) { return String(n).padStart(2, '0'); }",
           "",
@@ -30,11 +26,11 @@
           "  return d.getUTCFullYear() + '-' + pad(d.getUTCMonth()+1) + '-' + pad(d.getUTCDate());",
           "}",
           "",
-          "// today-0  bed last night / wake this morning",
+          "pm.variables.set('today', dateStr(0));",
+          "",
           "pm.variables.set('bed_today',  dateStr(-1) + 'T22:53:00Z');",
           "pm.variables.set('wake_today', dateStr(0)  + 'T07:05:00Z');",
           "",
-          "// Seed dates for Charlie (days ago from today)",
           "pm.variables.set('bed_d0',  dateStr(-1) + 'T23:15:00Z');",
           "pm.variables.set('wake_d0', dateStr(0)  + 'T06:45:00Z');",
           "",
@@ -59,6 +55,25 @@
       "item": [
         {
           "name": "1a. Happy path — create sleep log (Alice)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+                  "",
+                  "pm.test('Response has correct fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.be.a('number');",
+                  "  pm.expect(body.feeling).to.eql('GOOD');",
+                  "  pm.expect(body.totalMinutesInBed).to.eql(492);",
+                  "  pm.expect(body.sleepDate).to.eql(pm.variables.get('today'));",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -77,6 +92,21 @@
         },
         {
           "name": "1b. Bad request — wake time before bed time",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "",
+                  "pm.test('Error message mentions wake time', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('Wake time must be after bed time');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -95,6 +125,21 @@
         },
         {
           "name": "1c. Bad request — invalid feeling value",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "",
+                  "pm.test('Error message mentions invalid value', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('TERRIBLE');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -113,6 +158,21 @@
         },
         {
           "name": "1d. Conflict — duplicate sleep date (Alice)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409 Conflict', () => pm.response.to.have.status(409));",
+                  "",
+                  "pm.test('Error message mentions duplicate', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('already exists');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -130,7 +190,22 @@
           }
         },
         {
-          "name": "1e. Error — non-existent user (FK violation)",
+          "name": "1e. Error — non-existent user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404 Not Found', () => pm.response.to.have.status(404));",
+                  "",
+                  "pm.test('Error message mentions user', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('9999');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -149,6 +224,22 @@
         },
         {
           "name": "1f. Bad request — missing required fields",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));",
+                  "",
+                  "pm.test('Error message mentions missing field', () => {",
+                  "  const msg = pm.response.json().message;",
+                  "  pm.expect(msg.includes('wakeTime') || msg.includes('feeling')).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -172,6 +263,24 @@
       "item": [
         {
           "name": "2a. Happy path — Alice has today's log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response has correct sleep log', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.feeling).to.eql('GOOD');",
+                  "  pm.expect(body.totalMinutesInBed).to.eql(492);",
+                  "  pm.expect(body.sleepDate).to.eql(pm.variables.get('today'));",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "url": {
@@ -183,6 +292,21 @@
         },
         {
           "name": "2b. Not found — Bob has no log for today",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404 Not Found', () => pm.response.to.have.status(404));",
+                  "",
+                  "pm.test('Error label is Not Found', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql('Not Found');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "url": {
@@ -194,6 +318,21 @@
         },
         {
           "name": "2c. Not found — non-existent user",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404 Not Found', () => pm.response.to.have.status(404));",
+                  "",
+                  "pm.test('Error message mentions user', () => {",
+                  "  pm.expect(pm.response.json().message).to.include('9999');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "url": {
@@ -211,6 +350,17 @@
       "item": [
         {
           "name": "3-seed-1. Charlie — today",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -229,6 +379,17 @@
         },
         {
           "name": "3-seed-2. Charlie — yesterday",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -247,6 +408,17 @@
         },
         {
           "name": "3-seed-3. Charlie — 2 days ago",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -265,6 +437,17 @@
         },
         {
           "name": "3-seed-4. Charlie — 3 days ago",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -283,6 +466,17 @@
         },
         {
           "name": "3-seed-5. Charlie — 4 days ago",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -306,6 +500,31 @@
       "item": [
         {
           "name": "4a. Happy path — Charlie (5 entries, mixed feelings)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Response has averages fields', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.averageTotalMinutesInBed).to.be.a('number');",
+                  "  pm.expect(body.averageBedTime).to.be.a('string');",
+                  "  pm.expect(body.averageWakeTime).to.be.a('string');",
+                  "  pm.expect(body.startDate).to.be.a('string');",
+                  "  pm.expect(body.endDate).to.eql(pm.variables.get('today'));",
+                  "});",
+                  "",
+                  "pm.test('Feeling frequencies sum to 5', () => {",
+                  "  const f = pm.response.json().feelingFrequencies;",
+                  "  pm.expect(f.GOOD + f.OK + f.BAD).to.eql(5);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "url": {
@@ -317,6 +536,25 @@
         },
         {
           "name": "4b. Single entry — Alice (avg = single value)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.test('Averages reflect single entry', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.averageTotalMinutesInBed).to.eql(492);",
+                  "  pm.expect(body.feelingFrequencies.GOOD).to.eql(1);",
+                  "  pm.expect(body.feelingFrequencies.BAD).to.eql(0);",
+                  "  pm.expect(body.feelingFrequencies.OK).to.eql(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "url": {
@@ -328,6 +566,21 @@
         },
         {
           "name": "4c. Not found — Bob has no logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 404 Not Found', () => pm.response.to.have.status(404));",
+                  "",
+                  "pm.test('Error label is Not Found', () => {",
+                  "  pm.expect(pm.response.json().error).to.eql('Not Found');",
+                  "});"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "url": {
