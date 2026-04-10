@@ -11,14 +11,13 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneOffset
+import kotlin.math.roundToInt
 
 @Service
 class SleepLogService(
     private val repository: SleepLogRepository,
     private val userRepository: UserRepository
 ) {
-
-    // MARK: - Public API
 
     /**
      * Creates a new sleep log entry after validating the request.
@@ -71,7 +70,7 @@ class SleepLogService(
     fun getThirtyDayAverages(userId: Long): SleepAveragesResponse {
         validateUserExists(userId)
         val endDate = LocalDate.now()
-        val startDate = endDate.minusDays(29) // 30 days inclusive
+        val startDate = endDate.minusDays(29)
 
         val logs = repository.findByUserIdAndDateRange(userId, startDate, endDate)
         if (logs.isEmpty()) {
@@ -83,25 +82,15 @@ class SleepLogService(
         return computeAverages(logs, startDate, endDate)
     }
 
-    // MARK: - Averaging Logic
-
-    /**
-     * Builds the [SleepAveragesResponse] from a list of sleep logs.
-     *
-     * @param logs non-empty list of sleep logs within the date range.
-     * @param startDate beginning of the averaging window.
-     * @param endDate end of the averaging window.
-     */
     private fun computeAverages(
         logs: List<SleepLog>,
         startDate: LocalDate,
         endDate: LocalDate
     ): SleepAveragesResponse {
-        val avgMinutes = logs.map { it.totalMinutesInBed }.average().toInt()
+        val avgMinutes = logs.map { it.totalMinutesInBed }.average().roundToInt()
         val avgBedTime = averageTimeOfDay(logs.map { it.bedTime })
         val avgWakeTime = averageTimeOfDay(logs.map { it.wakeTime })
 
-        // Ensure all enum values appear in the map, even if count is 0
         val feelingFrequencies = MorningFeeling.values().associateWith { feeling ->
             logs.count { it.feeling == feeling }
         }
@@ -120,9 +109,6 @@ class SleepLogService(
      * Averages times-of-day using a noon-offset approach so that times
      * crossing midnight (e.g. 11 PM and 1 AM) average correctly to ~midnight
      * instead of producing a nonsensical noon result.
-     *
-     * @param instants the timestamps whose time-of-day components will be averaged.
-     * @return the average [LocalTime] in UTC.
      */
     private fun averageTimeOfDay(instants: List<Instant>): LocalTime {
         val secondsInDay = 86_400L
@@ -137,15 +123,11 @@ class SleepLogService(
         return LocalTime.ofSecondOfDay(secondOfDay)
     }
 
-    // MARK: - Validation
-
     private fun validateUserExists(userId: Long) {
         if (!userRepository.existsById(userId)) {
             throw UserNotFoundException("User with id $userId not found")
         }
     }
-
-    // MARK: - Mapping
 
     private fun SleepLog.toResponse() = SleepLogResponse(
         id = id,
