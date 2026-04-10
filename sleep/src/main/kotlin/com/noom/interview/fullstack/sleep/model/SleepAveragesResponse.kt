@@ -5,8 +5,14 @@ import java.time.LocalTime
 
 /**
  * Response DTO for the 30-day sleep averages endpoint.
- * [startDate]/[endDate] define the window, and [feelingFrequencies]
- * holds the count of each morning feeling within that range.
+ *
+ * @property startDate beginning of the 30-day window (inclusive).
+ * @property endDate end of the 30-day window (inclusive, typically today).
+ * @property averageTotalMinutesInBed mean sleep duration across the window.
+ * @property averageBedTime average time the user went to bed.
+ * @property averageWakeTime average time the user woke up.
+ * @property feelingFrequencies count of each [MorningFeeling] within the window;
+ *           all enum values are present even if count is 0.
  */
 data class SleepAveragesResponse(
     val startDate: LocalDate,
