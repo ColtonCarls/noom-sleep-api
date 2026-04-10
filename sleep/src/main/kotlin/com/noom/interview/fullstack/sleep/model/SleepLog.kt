@@ -5,9 +5,16 @@ import java.time.LocalDate
 
 /**
  * Domain entity representing a single night's sleep record.
- * Maps directly to the sleep_log table. Note that [sleepDate] and
- * [totalMinutesInBed] are generated columns in Postgres — they're
- * derived from bed/wake times and should be treated as read-only.
+ * Maps directly to the `sleep_log` table.
+ *
+ * @property id auto-generated primary key.
+ * @property userId the owner of this sleep log.
+ * @property bedTime when the user went to bed (full timestamp with timezone).
+ * @property wakeTime when the user woke up.
+ * @property feeling how the user felt in the morning.
+ * @property sleepDate DB-generated column derived from [wakeTime]; treat as read-only.
+ * @property totalMinutesInBed DB-generated column (wake − bed in minutes); treat as read-only.
+ * @property createdAt row creation timestamp.
  */
 data class SleepLog(
     val id: Long,
