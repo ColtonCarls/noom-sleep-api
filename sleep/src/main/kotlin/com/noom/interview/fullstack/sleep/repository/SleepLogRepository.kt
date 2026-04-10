@@ -20,8 +20,6 @@ class SleepLogRepository(
     private val jdbcTemplate: NamedParameterJdbcTemplate
 ) {
 
-    // MARK: - Row Mapping
-
     /** Maps a result set row to a [SleepLog] domain entity. */
     private val rowMapper = RowMapper<SleepLog> { rs, _ ->
         SleepLog(
@@ -35,8 +33,6 @@ class SleepLogRepository(
             createdAt = rs.getTimestamp("created_at").toInstant()
         )
     }
-
-    // MARK: - Queries
 
     /**
      * Inserts a new sleep log and returns the full persisted row.
@@ -60,7 +56,9 @@ class SleepLogRepository(
             .addValue("wakeTime", Timestamp.from(request.wakeTime))
             .addValue("feeling", request.feeling.name)
 
-        return jdbcTemplate.queryForObject(sql, params, rowMapper)!!
+        return checkNotNull(jdbcTemplate.queryForObject(sql, params, rowMapper)) {
+            "INSERT ... RETURNING * yielded no row for user $userId"
+        }
     }
 
     /**

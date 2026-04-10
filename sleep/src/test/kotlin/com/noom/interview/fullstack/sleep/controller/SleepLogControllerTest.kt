@@ -1,6 +1,7 @@
 package com.noom.interview.fullstack.sleep.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.noom.interview.fullstack.sleep.exception.GlobalExceptionHandler
 import com.noom.interview.fullstack.sleep.exception.SleepLogNotFoundException
 import com.noom.interview.fullstack.sleep.exception.UserNotFoundException
 import com.noom.interview.fullstack.sleep.model.CreateSleepLogRequest
@@ -8,6 +9,7 @@ import com.noom.interview.fullstack.sleep.model.MorningFeeling
 import com.noom.interview.fullstack.sleep.model.SleepAveragesResponse
 import com.noom.interview.fullstack.sleep.model.SleepLogResponse
 import com.noom.interview.fullstack.sleep.service.SleepLogService
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -17,6 +19,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
 import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -27,6 +30,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @WebMvcTest(SleepLogController::class)
+@Import(GlobalExceptionHandler::class)
 @DisplayName("SleepLogController")
 class SleepLogControllerTest {
 
@@ -101,6 +105,7 @@ class SleepLogControllerTest {
             )
                 .andExpect(status().isBadRequest)
                 .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value(containsString("TERRIBLE")))
         }
 
         @Test
@@ -113,7 +118,7 @@ class SleepLogControllerTest {
                     .content(body)
             )
                 .andExpect(status().isBadRequest)
-                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.message").value(containsString("wakeTime")))
         }
 
         @Test
